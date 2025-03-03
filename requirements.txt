@@ -1,0 +1,13 @@
+numpy>=1.18, <1.24
+pandas>=2
+python3-wget
+matplotlib==3.3.1
+pysam 
+requests
+terminaltables>=3.1
+
+#git packages
+git+https://git@gitlab.com/cfinan/skyline.git@master#egg=skyline
+git+https://gitlab.com/cfinan/ensembl-rest-client.git@master#egg=ensembl_rest_client
+git+https://gitlab.com/cfinan/cluster.git@master
+git+https://gitlab.com/cfinan/pyaddons.git@master#egg=pyaddons
