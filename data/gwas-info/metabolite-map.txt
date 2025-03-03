@@ -1,0 +1,9 @@
+Metabolite	Samplesize	Code	Path
+Cystine	14296	56	/lustre/projects/mol_cardio/resources/gwas-format/data/formatted/surendran_metabolome_36357675/b38/data_files/m00056_36357675.b38.gnorm.gz
+Cysteine	14296	1868	/lustre/projects/mol_cardio/resources/gwas-format/data/formatted/surendran_metabolome_36357675/b38/data_files/m01868_36357675.b38.gnorm.gz
+Taurocholate	14296	18497	/lustre/projects/mol_cardio/resources/gwas-format/data/formatted/surendran_metabolome_36357675/b38/data_files/m18497_36357675.b38.gnorm.gz
+Acetylcarnitine	14296	32198	/lustre/projects/mol_cardio/resources/gwas-format/data/formatted/surendran_metabolome_36357675/b38/data_files/m32198_36357675.b38.gnorm.gz
+Cysteine Sulfinic Acid	14296	37443	/lustre/projects/mol_cardio/resources/gwas-format/data/formatted/surendran_metabolome_36357675/b38/data_files/m37443_36357675.b38.gnorm.gz
+Taurine	14296	2125	/lustre/projects/mol_cardio/resources/gwas-format/data/formatted/surendran_metabolome_36357675/b38/data_files/m02125_36357675.b38.gnorm.gz
+Hypotaurine	14296	590	/lustre/projects/mol_cardio/resources/gwas-format/data/formatted/surendran_metabolome_36357675/b38/data_files/m00590_36357675.b38.gnorm.gz
+N-acetyltaurine	14296	48187	/lustre/projects/mol_cardio/resources/gwas-format/data/formatted/surendran_metabolome_36357675/b38/data_files/m48187_36357675.b38.gnorm.gz
