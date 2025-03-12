@@ -96,4 +96,4 @@ for i in infiles:
 gd.add_study(st)
 
 # write to xml
-gd.write(f'data/gwas-norm/xml/{STUDY_NAME}.xml')
+gd.write(f'data/gwas-norm/{STUDY_NAME}.xml')

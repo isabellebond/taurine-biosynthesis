@@ -19,7 +19,7 @@ log_dir= ~/taurine-biosynthesis/jobs/format-file
 # so there are no issues, relative paths are ok, but remember they will
 # be relative to where the script is run not where the config file is
 # also ~/ can be used
-ja_file=~/taurine-biosynthesis/data/gwas-norm/jaf-files/format-files.jaf
+ja_file=~/taurine-biosynthesis/data/gwas-norm/format-files.jaf
 # The location of the task script that runs the job. Task scripts should
 # accept 4 arguments.
 # 1. the job array file

@@ -16,7 +16,7 @@ from matplotlib import gridspec
 from matplotlib.backends import backend_agg
 
 #get datasets
-metabolites = pd.read_csv('data/gwas-info/metabolite-map.txt', sep = '\t')
+metabolites = pd.read_csv('data/gwas-norm/metabolite-map.txt', sep = '\t')
 print(metabolites)
 
 dfs = []
