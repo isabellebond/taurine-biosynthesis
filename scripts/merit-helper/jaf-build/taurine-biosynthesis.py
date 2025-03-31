@@ -26,7 +26,7 @@ ROOT_DIR = os.getcwd()
 print(ROOT_DIR)
 HOME = str(Path.home())
 # NOTE: the output directory
-OUTPUT_PATH = os.path.join(HOME, 'Scratch/results_dir/taurine-metabolism')
+OUTPUT_PATH = os.path.join(HOME, 'Scratch/results_dir/taurine-biosynthesis')
 Path(OUTPUT_PATH).mkdir(parents=True, exist_ok=True)
 
 # ordered columns
@@ -37,8 +37,9 @@ selcol =['rowidx', 'infile', 'outfile', 'exposure', 'exposure_path',
          'models', 'models-kwargs', 'steiger_pvalue',
          ]
 
-metabolites = ['taurine', 'taurochlolate', 'acetylcarnitine', 'n-acetyltaurine']
-genes = ['PTER','BAAT', 'SLC6A6', 'SLC6A11', 'SLC5A13']
+metabolites = ['Cystine', 'Cysteine', 'Cysteine Sulfinic Acid', 'Taurine', 'Hypotaurine']
+genes = ['GCLC','CDO1','GAD1', 'GADL1', 'CSAD', 'CTH','ADO', 'VNN1', 'VNN2', 'VNN3',
+         'FMO1','FMO2','FMO3','FMO4', 'FMO5', 'HTDH']
 
 ###############################################################################
 #Get genome wide inputs
@@ -93,7 +94,7 @@ jaf = exposures.copy()
 jaf['infile'] = os.path.join(ROOT_DIR, 'data', 'merit-helper','outcome-files', 'outcomes.txt')
 jaf['exposure'] = jaf['phenotype']
 jaf['ensemblid'] = "genomewide"
-jaf['exposure_path'] = os.path.join(ROOT_DIR, 'data', 'merit-helper','exposure-files', 'taurine_metabolism.txt')
+jaf['exposure_path'] = os.path.join(ROOT_DIR, 'data', 'merit-helper','exposure-files', 'taurine_biosynthesis.txt')
 jaf['up'] = 25000
 jaf['down'] = 25000
 jaf['pvalue'] = 8
@@ -159,7 +160,7 @@ for i,row in eqtls.iterrows():
     print(row)
     gene_jaf = old_jaf.head(1).copy()
     gene_jaf['exposure'] = row['Unnamed: 0']
-    gene_jaf['exposure_path'] = os.path.join(ROOT_DIR, 'data','merit-helper', 'exposure-files', 'taurine_metabolism_eqtl.txt')
+    gene_jaf['exposure_path'] = os.path.join(ROOT_DIR, 'data','merit-helper', 'exposure-files', 'taurine_biosynthesis_eqtl.txt')
     gene_jaf['pvalue'] = 6
     gene_jaf['ensemblid'] = row['ensembl_id']
     gene_jaf['phenotype'] = gene_jaf['exposure']
@@ -175,9 +176,65 @@ jaf['rowidx'] = list(range(1, jaf.shape[0] + 1))
 exposures = exposures[exposure_cols]
 eqtls = eqtls[exposure_cols]
 
-print(eqtls)
+###############################################################################
+#Run cis-mrs with the pqtl data for given genes
+###############################################################################
+#Get pqtl data for genes of interest
+pqtl =  pd.read_csv('data/merit-helper/mapping-files/dtadb_protein_mapping_b38.2.txt', sep = '\t')
 
+pqtl = pqtl.loc[pqtl['ensembl_gene_id'].isin(ensembl['gene_id'].unique())]
+
+print(pqtl)
+
+for i,row in pqtl.iterrows():
+    print(row)
+    gene_jaf = old_jaf.head(1).copy()
+    gene_jaf['exposure'] = row['gene'] + '_' + row['dataset']
+    gene_jaf['exposure_path'] = os.path.join(ROOT_DIR, 'data','merit-helper', 'exposure-files', 'taurine_biosynthesis_pqtl.txt')
+    gene_jaf['pvalue'] = 6
+    gene_jaf['ensemblid'] = row['ensembl_gene_id']
+    gene_jaf['phenotype'] = gene_jaf['exposure']
+    gene_jaf['outfile'] = OUTPUT_PATH + '/' +  row['gene'] + '_' + row['dataset']  + '.tar.gz'
+    jaf = pd.concat([jaf, gene_jaf])
+
+pqtl['effect_type'] = 'beta'
+pqtl['effect_allele'] = None
+pqtl['other_allele'] = None
+pqtl['effect_size'] = None
+pqtl['standard_error'] = None
+pqtl['pvalue'] = None
+pqtl['chr_name'] = None
+pqtl['start_pos'] = None
+pqtl['end_pos'] = None
+pqtl['chrpos'] = None
+pqtl['chrpos_spec'] = None
+pqtl['start_anchor'] = None
+pqtl['end_anchor'] = None
+pqtl['pvalue_logged'] = True
+pqtl['sep'] = '\t'
+pqtl['compression'] = 'gzip'
+pqtl['group'] = None
+pqtl['drop'] = None
+pqtl['notes'] = None
+pqtl['var_id'] = None
+pqtl['unit'] = None
+pqtl['no_cases'] = 0
+pqtl['url'] = None
+
+jaf = jaf.drop_duplicates(keep = 'first')
+jaf = jaf.reset_index(drop = True)
+jaf['rowidx'] = list(range(1, jaf.shape[0] + 1))
+
+
+exposures = exposures[exposure_cols]
 exposures.set_index('phenotype', drop = False, inplace = True)
-exposures.to_csv('data/merit-helper/exposure-files/taurine_metabolism.txt', sep = '\t')
-jaf.to_csv('data/merit-helper/jaf-files/taurine-metabolism.jaf', sep = '\t', index = False)
-eqtls.to_csv(os.path.join('data', 'merit-helper', 'exposure-files', 'taurine_metabolism_eqtl.txt'), sep = '\t')
+
+
+pqtl['phenotype'] = pqtl['gene'] + '_' + pqtl['dataset']
+pqtl = pqtl[exposure_cols]
+pqtl.set_index('phenotype', drop = False, inplace = True)
+
+exposures.to_csv('data/merit-helper/exposure-files/taurine_biosynthesis.txt', sep = '\t')
+jaf.to_csv('data/merit-helper/jaf-files/taurine-biosynthesis.jaf', sep = '\t', index = False)
+eqtls.to_csv(os.path.join('data', 'merit-helper', 'exposure-files', 'taurine_biosynthesis_eqtl.txt'), sep = '\t')
+pqtl.to_csv(os.path.join('data', 'merit-helper', 'exposure-files', 'taurine_biosynthesis_pqtl.txt'), sep = '\t')

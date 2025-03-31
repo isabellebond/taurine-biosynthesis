@@ -1,5 +1,5 @@
 numpy>=1.18, <1.24
-pandas>=2
+pandas
 python3-wget
 matplotlib==3.3.1
 pysam 
@@ -16,3 +16,5 @@ git+https://gitlab.com/cfinan/pyaddons.git@master#egg=pyaddons
 #local packages
 -e /lustre/projects/mol_cardio/resources/software/dtadb_suite/gwas-norm
 -r /lustre/projects/mol_cardio/resources/software/dtadb_suite/gwas-norm/requirements.txt
+-e /home/rmgpibo/merit-helper/
+-r /home/rmgpibo/merit-helper/requirements.txt 
