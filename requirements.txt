@@ -5,6 +5,7 @@ matplotlib==3.3.1
 pysam 
 requests
 terminaltables>=3.1
+owlready2==0.47
 
 #remote git packages
 #git+ssh://git@gitlab.com:cfinan/gwas-norm.git@master#egg=gwas-norm
