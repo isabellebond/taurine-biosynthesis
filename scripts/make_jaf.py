@@ -75,6 +75,7 @@ def create_exposure(gene_df, qtls, metabolites):
     exposures = exposures.drop_duplicates(subset = 'phenotype', keep = 'first')
     exposures = exposures[exposure_cols]
     exposures.index = exposures['phenotype']
+    exposures['no_cases'].fillna(0, inplace=True)
 
     print(exposures)
 
