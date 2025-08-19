@@ -80,7 +80,7 @@ def create_exposure(gene_df, qtls, metabolites):
 
     return exposures
 
-def make_jaf_mr(exposures, exposurefile, outcomefile, outpath, pvalue=6, r2=0.01):
+def make_jaf_mr(exposures, exposurefile, outcomefile, outpath, pvalue=6, r2=0.01, genomewide=False):
     selcol =['rowidx', 'infile', 'outfile', 'exposure', 'exposure_path',
          'ensemblid',  'up', 'down', 'pvalue', 'logpval', 'maf',
          'ld_cut', 'ld_sample','ld_seed', 'ref_pop',
@@ -102,6 +102,7 @@ def make_jaf_mr(exposures, exposurefile, outcomefile, outpath, pvalue=6, r2=0.01
     for i, row in jaf.iterrows():
         if row['phenotype'].startswith('ENSG'):
             jaf.loc[i, 'ensemblid'] = row['phenotype'].split('_')[0]
+
             
 
     jaf['pvalue'] = pvalue
@@ -114,9 +115,19 @@ def make_jaf_mr(exposures, exposurefile, outcomefile, outpath, pvalue=6, r2=0.01
     jaf['sample_list'] = 'EUR_UKB_WO_RELATED'
     jaf['proximity_dist'] = 'None'
     jaf['drop_variants'] = 'None'
-    jaf['models'] = "IVW;IVW|IVW"
+
+    if genomewide:
+        jaf['models'] = "IVW;IVW|IVW;Egger;Egger|Egger"
+        jaf["steiger_pvalue"] = 0.05
+        jaf = jaf.loc[jaf['ensemblid'] == 'genomewide', :]
+
+    else:
+        jaf['models'] = "IVW;IVW|IVW"
+        jaf["steiger_pvalue"] = 0
+        jaf = jaf.loc[jaf['ensemblid'] != 'genomewide', :]
+
     jaf['models-kwargs'] = 'None'
-    jaf["steiger_pvalue"] = 0
+    
     jaf['drop_variants'] = None
 
     jaf['outfile'] = [outpath + '/' +  str(i).strip() + '.tar.gz' for\
@@ -272,10 +283,14 @@ def main():
     print(outcomes['sep'])
 
     outpath_mr = '/myriadfs/home/rmgpibo/Scratch/results/taurine/mr'
+    outpath_mr_gw = '/myriadfs/home/rmgpibo/Scratch/results/taurine/genomewide_mr'
     outpath_coloc = '/myriadfs/home/rmgpibo/Scratch/results/taurine/coloc'
 
-    jaf = make_jaf_mr(exposures, exposure_path, outcome_path, outpath_mr, pvalue=6, r2=0.01)
-    jaf.to_csv('/myriadfs/home/rmgpibo/Scratch/taurine-biosynthesis/data/merit-helper/jaf/mr.jaf', sep='\t', index = False,  encoding="utf-8")
+    jaf = make_jaf_mr(exposures, exposure_path, outcome_path, outpath_mr, pvalue=6, r2=0.01, genomewide=False)
+    jaf.to_csv('/myriadfs/home/rmgpibo/Scratch/taurine-biosynthesis/data/merit-helper/jaf/cis_mr.jaf', sep='\t', index = False,  encoding="utf-8")
+
+    jaf = make_jaf_mr(exposures, exposure_path, outcome_path, outpath_mr_gw, pvalue=8, r2=0.01, genomewide=True)
+    jaf.to_csv('/myriadfs/home/rmgpibo/Scratch/taurine-biosynthesis/data/merit-helper/jaf/genomewide_mr.jaf', sep='\t', index = False, encoding="utf-8")
 
     jaf = make_jaf_coloc(exposures, exposure_path, outcome_path, outpath_coloc, pvalue=6, r2=0.01)
     jaf.to_csv('/myriadfs/home/rmgpibo/Scratch/taurine-biosynthesis/data/merit-helper/jaf/coloc.jaf', sep='\t', index = False, encoding="utf-8")
