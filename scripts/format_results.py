@@ -33,7 +33,7 @@ def main():
         sep='\t'
     ).set_index('gene_id')
 
-    mr = pd.read_csv('/home/rmgpibo/Scratch/taurine-biosynthesis/results/merit-helper/results_file.tsv', sep='\t')
+    mr = pd.read_csv('/home/rmgpibo/Scratch/taurine-biosynthesis/data/merit-helper/results/results_file.tsv', sep='\t')
     #mr = mr.loc[mr['outcome_crude'].isin(['lvef', 'dcm'])]
 
     # Count rows per Outcome
@@ -49,7 +49,7 @@ def main():
     # Boolean column for passing Bonferroni
     mr['Bonferroni'] = mr['P-value (float)'] < mr['bonf_thresh']
 
-    mr = mr.loc[mr['P-value (float)'] < 0.05]
+    #mr = mr.loc[mr['P-value (float)'] < 0.05]
 
     # Optional: if you still want exposure/gene columns
     mr['exposure'] = mr['filename'].str.split('.').str[0]
@@ -66,7 +66,7 @@ def main():
     mr.sort_values(by = ['P-value (float)'], inplace=True, ascending=True)
 
 
-    mr.to_csv('data/merit-helper/results/mr.formatted.tsv', sep = '\t')
+    mr.to_csv('data/merit-helper/results/genomewide_mr.formatted.tsv', sep = '\t')
 
 if __name__ == "__main__":
     main()
