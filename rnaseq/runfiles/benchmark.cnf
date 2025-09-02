@@ -1,4 +1,4 @@
-// Benchmarking configuration for nf-core/rnaseq
+/ Benchmarking configuration for nf-core/rnaseq
 
 // Process-specific settings
 process {
@@ -12,7 +12,7 @@ process {
 // General parameters for the pipeline run
 params {
     // --- Benchmarking Settings ---
-    max_reads = 10000000   // Subsample reads for a faster benchmark run
+    max_reads = 5000000   // Subsample reads for a faster benchmark run
     max_cpus = 1           // Default to 1 core if not specified otherwise
 
     // --- Standard Pipeline Settings ---

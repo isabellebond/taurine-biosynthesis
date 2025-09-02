@@ -44,7 +44,8 @@ nextflow run nf-core/rnaseq \
     --gtf "${REFERENCE_DIR}/Homo_sapiens.GRCh38.114.gtf.gz" \
     --fasta "${REFERENCE_DIR}/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz" \
     -c "${RUNFILES_DIR}/benchmark.cnf" \
-    --max_cpus ${CORES}
+    --max_cpus ${CORES} \
+    --skip_qc
 
 echo "=========================================================="
 echo "Benchmark with $CORES cores finished."
