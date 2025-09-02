@@ -1,0 +1,6 @@
+process {
+    withName: STAR_ALIGN {
+       time = '48h'
+       cpus = 16
+    }
+}

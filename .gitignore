@@ -3,6 +3,12 @@ jobs/
 data/
 .nextflow*
 work/
+rnaseq/benchmark/
+rnaseq/jobs/
+rnaseq/reference/
+rnaseq/taurine/
+rnaseq/test/
+rnaseq/raw/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
