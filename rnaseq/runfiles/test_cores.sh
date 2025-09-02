@@ -1,37 +1,51 @@
 #!/bin/bash
-#$ -l mem=8G
-#$ -l h_rt=24:00:00
-#$ -pe smp 16
-#$ -cwd
-#$ -j y
-#$ -S /bin/bash
-#$ -N rnaseq_benchmark
+#$ -l mem=8G             # Request 8G of memory *per core*
+#$ -l h_rt=48:00:00      # Request 48 hours of wall time, matching the max
+#$ -cwd                  # Run the job from the current working directory
+#$ -j y                  # Merge standard error and standard out
+#$ -S /bin/bash          # Specify the shell
+#$ -N rnaseq_benchmark   # Job name
 
+# --- Safety Check ---
+# This ensures the script exits if a number of cores isn't provided
+if [ -z "$1" ]; then
+    echo "Error: Please provide the number of cores as the first argument."
+    echo "Usage: qsub -pe smp <cores> run_benchmark_job.sh <cores>"
+    exit 1
+fi
+
+CORES=$1
+
+echo "=========================================================="
+echo "Starting nf-core/rnaseq benchmark..."
+echo "Job ID: $JOB_ID"
+echo "Running on host: $(hostname)"
+echo "Requested Cores: $CORES"
+echo "=========================================================="
+
+# --- Environment Setup ---
 module load java/temurin-17/17.0.2_8
 export NXF_OPTS='-Xms1g -Xmx3g'
 
-FASTQ_DIR="/home/rmgpibo/Scratch/taurine-biosynthesis/data/rnaseq/input"
-OUTDIR="data/rnaseq/benchmark"
-GENOME="GRCh38"
+# --- Define File Paths ---
+# Using absolute paths is a good practice
+BASE_DIR="/home/rmgpibo/Scratch/taurine-biosynthesis/data/rnaseq"
+FASTQ_DIR="${BASE_DIR}/input"
+OUTDIR="${BASE_DIR}/benchmark"
+REFERENCE_DIR="${BASE_DIR}/reference"
+RUNFILES_DIR="${BASE_DIR}/runfiles"
 
-for CORES in 1 4 8 16; do
-    echo "=== Running nf-core/rnaseq with $CORES cores ==="
+# --- Run Nextflow Pipeline ---
+# The --max_cpus parameter now passes the core count to Nextflow
+nextflow run nf-core/rnaseq \
+    -profile singularity \
+    --input "${FASTQ_DIR}/samplesheet.csv" \
+    --outdir "${OUTDIR}/test_${CORES}cores" \
+    --gtf "${REFERENCE_DIR}/Homo_sapiens.GRCh38.114.gtf.gz" \
+    --fasta "${REFERENCE_DIR}/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz" \
+    -c "${RUNFILES_DIR}/benchmark.cnf" \
+    --max_cpus ${CORES}
 
-    nextflow run nf-core/rnaseq \
-        -profile singularity \
-        --input "${FASTQ_DIR}/samplesheet.csv" \
-        --outdir "${OUTDIR}/test_${CORES}cores" \
-        --gtf /home/rmgpibo/Scratch/taurine-biosynthesis/data/rnaseq/reference/Homo_sapiens.GRCh38.114.gtf.gz \
-        --fasta /home/rmgpibo/Scratch/taurine-biosynthesis/data/rnaseq/reference/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz \
-        -c /home/rmgpibo/Scratch/taurine-biosynthesis/data/rnaseq/runfiles/benchmark.cnf \
-        -profile ucl_myriad \
-        -process.cpus $CORES \
-        -with-report report_${CORES}cores.html \
-        -with-trace trace_${CORES}cores.txt \
-        -with-timeline timeline_${CORES}cores.html \
-        -with-dag flowchart_${CORES}cores.png \
-        -resume \
-        --skip_qc \
-        --max_reads 5000000 \
-        -process.Name:STAR_ALIGN.cpus $CORES
-done
+echo "=========================================================="
+echo "Benchmark with $CORES cores finished."
+echo "=========================================================="
