@@ -1,0 +1,33 @@
+// Benchmarking configuration for nf-core/rnaseq
+process {
+    withName: STAR_ALIGN {
+       time = '48h'
+       cpus = 16
+    }
+}
+
+params {
+    max_reads = 10000000   // Subsample reads for benchmarking
+    aligner   = 'star'     // Force STAR aligner
+    skip_qc   = true       // Skip QC steps to save time during benchmarks
+}
+
+timeline {
+    enabled = true
+    file    = "timeline.html"
+}
+
+trace {
+    enabled = true
+    file    = "trace.txt"
+}
+
+report {
+    enabled = true
+    file    = "report.html"
+}
+
+dag {
+    enabled = true
+    file    = "dag.png"
+}
