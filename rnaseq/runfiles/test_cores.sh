@@ -1,10 +1,12 @@
 #!/bin/bash
 #$ -l mem=8G             # Request 8G of memory *per core*
-#$ -l h_rt=48:00:00      # Request 48 hours of wall time, matching the max
+#$ -l h_rt=24:00:00      # Request 48 hours of wall time, matching the max
 #$ -cwd                  # Run the job from the current working directory
 #$ -j y                  # Merge standard error and standard out
 #$ -S /bin/bash          # Specify the shell
 #$ -N rnaseq_benchmark   # Job name
+#$ -o /home/rmgpibo/Scratch/taurine-biosynthesis/rnaseq/jobs/rnaseq.o
+#$ -e /home/rmgpibo/Scratch/taurine-biosynthesis/rnaseq/jobs/rnaseq.e
 
 # --- Safety Check ---
 # This ensures the script exits if a number of cores isn't provided
@@ -36,16 +38,14 @@ REFERENCE_DIR="${BASE_DIR}/reference"
 RUNFILES_DIR="${BASE_DIR}/runfiles"
 
 # --- Run Nextflow Pipeline ---
-# The --max_cpus parameter now passes the core count to Nextflow
 nextflow run nf-core/rnaseq \
-    -profile singularity \
+    -profile ucl_myriad \
     --input "${FASTQ_DIR}/samplesheet.csv" \
     --outdir "${OUTDIR}/test_${CORES}cores" \
     --gtf "${REFERENCE_DIR}/Homo_sapiens.GRCh38.114.gtf.gz" \
     --fasta "${REFERENCE_DIR}/Homo_sapiens.GRCh38.dna_sm.primary_assembly.fa.gz" \
     -c "${RUNFILES_DIR}/benchmark.cnf" \
-    --max_cpus ${CORES} \
-    --skip_qc
+    --skip_qc \
 
 echo "=========================================================="
 echo "Benchmark with $CORES cores finished."

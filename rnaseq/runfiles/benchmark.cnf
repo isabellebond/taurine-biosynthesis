@@ -1,37 +1,7 @@
-/ Benchmarking configuration for nf-core/rnaseq
-
-// Process-specific settings
 process {
     // This allows the number of CPUs for the alignment step to be set from the command line
     withName: 'STAR_ALIGN' {
-       time = '48h'
+       time = '16h'
        cpus = { params.max_cpus }
     }
-}
-
-// General parameters for the pipeline run
-params {
-    // --- Benchmarking Settings ---
-    max_reads = 5000000   // Subsample reads for a faster benchmark run
-    max_cpus = 1           // Default to 1 core if not specified otherwise
-
-    // --- Standard Pipeline Settings ---
-    aligner   = 'star'     // Force STAR aligner
-    skip_qc   = true       // Skip QC steps to save time during benchmarks
-}
-
-// --- Nextflow report settings ---
-// These are great for monitoring and were already correctly enabled
-timeline {
-    enabled = true
-}
-trace {
-    enabled = true
-}
-report {
-    enabled = true
-}
-dag {
-    enabled = true
-    file    = "dag.png"
 }
