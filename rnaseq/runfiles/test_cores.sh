@@ -31,7 +31,7 @@ export NXF_OPTS='-Xms1g -Xmx3g'
 
 # --- Define File Paths ---
 # Using absolute paths is a good practice
-BASE_DIR="/home/rmgpibo/Scratch/taurine-biosynthesis/data/rnaseq"
+BASE_DIR="/home/rmgpibo/Scratch/taurine-biosynthesis/rnaseq"
 FASTQ_DIR="${BASE_DIR}/input"
 OUTDIR="${BASE_DIR}/benchmark"
 REFERENCE_DIR="${BASE_DIR}/reference"

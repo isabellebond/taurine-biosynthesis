@@ -1,0 +1,11 @@
+process {
+    clusterOptions = { "-l mem=${task.memory.toGiga()}G" }
+}
+
+process {
+    resourceLimits = [
+        cpus: 36,
+        memory: 192.GB,
+        time: 48.h
+    ]
+}

@@ -1,6 +1,16 @@
 process {
-    withName: STAR_ALIGN {
-       time = '4h'
-       cpus = 1
-    }
+  withName: 'STAR_ALIGN' {
+    cpus   = 8
+    memory = '56 GB'
+    time   = '48h'
+    clusterOptions = "-l mem=7G"
+  }
+}
+
+process {
+    resourceLimits = [
+        memory: 192.GB,
+        cpus: 36,
+        time: 48.h
+    ]
 }
