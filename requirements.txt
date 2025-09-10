@@ -6,6 +6,7 @@ pysam
 requests
 terminaltables>=3.1
 owlready2==0.47
+scanpy
 
 #remote git packages
 #git+ssh://git@gitlab.com:cfinan/gwas-norm.git@master#egg=gwas-norm
