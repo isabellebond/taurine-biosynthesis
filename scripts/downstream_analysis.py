@@ -6,6 +6,7 @@ from adjustText import adjust_text
 import scanpy as sc
 import gseapy as gp
 import seaborn as sns
+import os
 
 from pydeseq2.dds import DeseqDataSet
 from pydeseq2.ds import DeseqStats
@@ -24,7 +25,6 @@ def load_counts(file_path, id_col = 'gene_id', drop_samples = []):
     logging.info(f"Loaded counts data with {len(df)} genes and {len(df.columns)} samples.")
 
     df = df.T
-    print(df)
     
 
     genes_to_keep = df.columns[df.sum(axis=0) >= 10]
@@ -77,11 +77,11 @@ def de_statistics(dds, contrast, alpha = 0.05):
 
 def plot_pca(dds, color_by = 'Combination', outfile_prefix = 'results/pca_plot'):
     sc.tl.pca(dds)
-    sc.pl.pca(dds, color = color_by, size = 200, title = 'PCA plot', return_fig = True, show = True)
+    sc.pl.pca(dds, color = color_by, size = 200, title = 'PCA plot', annotate_var_explained = True, return_fig = True, show = True)
     plt.savefig(f'{outfile_prefix}.png', bbox_inches='tight')
     return
 
-def plot_volcano(df, labels, label_col=None, title=None, hline=1.3, vline=0, savepath=None):
+def plot_volcano(df, labels, label_col=None, title=None, hline=1.3, vline=1, savepath=None):
     df = df.dropna(subset=['padj', 'log2FoldChange'])
     df['-log10(padj)'] = -1 * np.log10(df['padj'])
     fig, ax = plt.subplots(figsize=(6, 10))
@@ -149,12 +149,12 @@ def plot_heatmap(dds, genes, genemap, samples = None, prefix = None, row_order =
 def run_gsea(res, outfile_prefix = None):
     res = res.reset_index()
 
-    ranking = res[['gene_name', 'stat']].dropna().sort_values(by='stat', ascending=False)
+    ranking = res[['gene_name', 'stat']].sort_values(by='stat', ascending=False)
+    print(ranking)
     #print duplicates
     duplicates = ranking[ranking.duplicated(subset='gene_name', keep=False)]
     if len(duplicates) > 0:
         logging.warning(f"Found {len(duplicates)} duplicate gene names in ranking. Keeping the first occurrence.")
-        print(duplicates)
     ranking = ranking.drop_duplicates(subset='gene_name', keep = 'first')
     logging.info(f"Removed duplicates, {len(ranking)} unique genes remain for GSEA.")
 
@@ -166,15 +166,34 @@ def run_gsea(res, outfile_prefix = None):
         terms = pre_res.res2d
         terms['Dataset'] = terms['Term'].str.split('__').str[0]
         terms['GO_ID'] = terms['Term'].str.split('(').str[1].str.split(')').str[0]
-        terms['Term'] = terms['Term'].str.split('__').str[1].str.split('(').str[0].str.strip()
+        terms['Term'].apply(type).value_counts()
+        terms['Term'] = terms['Term'].apply(
+            lambda x: (
+            str(x).split('__')[1].split('(')[0].strip()
+            if isinstance(x, str) and '__' in x
+            else x
+            )  
+        )
 
         terms.sort_values(by='FWER p-val', ascending=True, inplace=True)
 
         if outfile_prefix:
-            terms.to_csv(f'{outfile_prefix}_gene_set.txt', sep='\t', index=False)
+            terms.to_csv(f'{outfile_prefix}_{gene_set}.txt', sep='\t', index=False)
 
     return terms
 
+def create_barplot(data, x, y, hue=None, title=None, xlabel=None, ylabel=None, savepath=None):
+    plt.figure(figsize=(10, 6))
+    sns.barplot(data=data, x=x, y=y, hue=hue)
+    if title:
+        plt.title(title)
+    if xlabel:
+        plt.xlabel(xlabel)
+    if ylabel:
+        plt.ylabel(ylabel)
+    if savepath:
+        plt.savefig(savepath, bbox_inches='tight')
+    plt.show()
 
 def main():
     logging.basicConfig(
@@ -184,82 +203,51 @@ def main():
         level=logging.INFO
     )
 
-    gene_counts, gene_metadata, genemap = load_counts("rnaseq/counts/salmon.merged.gene_counts.tsv", id_col = 'gene_name')
-    dds = create_deseq2_object(gene_counts, gene_metadata, design = 'Combination')
-    plot_pca(dds, color_by = 'Combination', outfile_prefix='results/pca_plot_all_samples.png')
+    for filters, names in zip([[], ['431_WT_Taurine'], ['431_WT_Taurine', '443_TTN_Untreated']], ['no_filter','remove_431_TTN', 'remove_443_TTN']):
+        logging.info(f"================ Analysis with filters: {filters} ================")
+        gene_counts, gene_metadata, genemap = load_counts("rnaseq/counts/salmon.merged.gene_counts.tsv", id_col = 'gene_name', drop_samples=filters)
+        dds = create_deseq2_object(gene_counts, gene_metadata, design = 'Combination')
+        os.makedirs('results', exist_ok=True)
+        os.makedirs(f'results/{names}', exist_ok=True)
+        plot_pca(dds, color_by = 'Combination', outfile_prefix=f'results/{names}/pca_plot_all_samples.png')
 
-    gene_counts, gene_metadata, genemap = load_counts("rnaseq/counts/salmon.merged.gene_counts.tsv", id_col = 'gene_name', drop_samples=['431_WT_Taurine'])
-    dds = create_deseq2_object(gene_counts, gene_metadata, design = 'Combination')
-    plot_pca(dds, color_by = 'Combination', outfile_prefix='results/pca_plot_filtered_samples.png')
-    #print(gene_counts)
 
-    combinations = [['WT_Untreated', 'TTN_Untreated'],
+        combinations = [['WT_Untreated', 'TTN_Untreated'],
                     ['WT_Untreated', 'TTN_Taurine'],
                     ['WT_Untreated', 'WT_Taurine'], 
                     ['TTN_Untreated', 'TTN_Taurine'], 
                     ['WT_Taurine', 'TTN_Taurine']]
+    '''
+        for combination in combinations:
+            summary = de_statistics(dds, ['Combination', combination[0], combination[1]])
+            summary['gene_name'] = summary.index.map(genemap)
 
-    for combination in combinations:
-        summary = de_statistics(dds, ['Combination', combination[0], combination[1]])
-        summary['gene_name'] = summary.index.map(genemap)
+            summary.reset_index(inplace=True)
+            summary = summary.sort_values(by='padj', ascending=True)
+            summary['gene_name'] = summary['gene_name'].fillna(summary['gene_id'])
+            summary = summary.loc[summary['baseMean']>=10]
 
-        summary.reset_index(inplace=True)
-        summary['gene_name'] = summary['gene_name'].fillna(summary['gene_id'])
-        summary.to_csv(f'results/deseq2_{combination[0]}_vs_{combination[1]}.tsv', sep = '\t', index = False)
+            summary.to_csv(f'results/{names}/deseq2_{combination[0]}_vs_{combination[1]}.tsv', sep = '\t', index = False)
+            #summary = pd.read_csv(f'results/deseq2_{combination[0]}_vs_{combination[1]}.tsv', sep = '\t')
 
-        #summary = pd.read_csv(f'results/deseq2_{combination[0]}_vs_{combination[1]}.tsv', sep = '\t')
-        labels = summary.loc[summary['padj']<0.05, 'gene_name'].tolist()
+            labels = summary.loc[summary['padj']<0.05, 'gene_name'].tolist()
+            if len(labels) > 20:
+                print(f"{len(labels)} significant genes in {combination[0]} vs {combination[1]}, truncating to top 20.")
+            truncated_labels = labels[:20]
+            
+            mitochondrial_genes = summary.loc[summary['gene_name'].str.startswith('MT-'), 'gene_name'].tolist()
+            genesets = [labels, 
+                        mitochondrial_genes,
+                        ['TTN', 'NPPA','NPPB','NDUFC2', 'NDUFS5', 'COX5B', 'MYL2', 'VEGF']
+                        ]
+            
+            geneset_names = ['sig_deg', 'mitochondrial', 'ttn_important']
+            #plot_volcano(summary, labels = truncated_labels, label_col = 'gene_name', title = f'Volcano Plot: {combination[0]} vs {combination[1]}', hline = 1.3, vline = 1, savepath = f'results/{names}/volcano_{combination[0]}_vs_{combination[1]}.png')
+            #for geneset, name in zip(genesets, geneset_names):
+            #    plot_heatmap(dds, genes = geneset, genemap = genemap, prefix = f'{names}/{name}_{combination[0]}_vs_{combination[1]}')
+            #run_gsea(summary, outfile_prefix = f'results/{names}/gsea_{combination[0]}_vs_{combination[1]}.filter')
         
-        mitochondrial_genes = summary.loc[summary['gene_name'].str.startswith('MT-'), 'gene_name'].tolist()
-        genesets = [labels, 
-                    mitochondrial_genes,
-                    ['TTN', 'NPPA','NPPB','NDUFC2', 'NDUFS5', 'COX5B', 'MYL2', 'VEGF']
-                    ]
-        geneset_names = ['sig_deg', 'mitochondrial', 'ttn_important']
-        for geneset, name in zip(genesets, geneset_names):
-            plot_heatmap(dds, genes = geneset, genemap = genemap, prefix = f'{name}_{combination[0]}_vs_{combination[1]}')
-        
-        #run_gsea(summary, outfile_prefix = 'results/gsea_WT_vs_TTN_')
-
-    #
-
-    #plot_volcano(summary, labels = labels, label_col = 'gene_name', title = 'WT_Untreated vs TTN_Untreated', 
-    #              hline = 1.3, vline = 0, savepath = 'results/volcano_WT_Untreated_vs_TTN_Untreated.png')
-    
-    #plot_heatmap(summary, rows = labels)
-
-    
-    
-    #transcript_counts, transcript_metadata, transmap = load_counts("rnaseq/taurine_alignment_salmon/salmon.merged.transcript_counts.tsv", id_col = 'gene_id')
-    """
-    combinations = [['WT_Untreated', 'TTN_Untreated'],
-                    ['WT_Untreated', 'TTN_Taurine'],
-                    ['WT_Untreated', 'WT_Taurine'], 
-                    ['TTN_Untreated', 'TTN_Taurine'], 
-                    ['WT_Taurine', 'TTN_Taurine']]
-    
-    for combination in combinations:
-        logging.info(f"-----------------------------------------------------------")
-        logging.info(f"Analyzing combination: {combination[0]} vs {combination[1]}")
-        logging.info(f"-----------------------------------------------------------")
-
-        comb_counts = gene_counts[gene_metadata['Combination'].isin(combination)]
-        comb_metadata = gene_metadata[gene_metadata['Combination'].isin(combination)]
-
-        res, sig = run_deseq2(comb_counts, comb_metadata, genemap, design = 'Combination' , outfile = f'results/deseq2_{combination[0]}_vs_{combination[1]}.tsv')
-        run_gsea(res, outfile = f'results/gsea_{combination[0]}_vs_{combination[1]}.tsv')
-
-        
-        if 'WT_Taurine' in combination:
-            logging.info(f'Analysis rerun with WT_439_Taurin removed due to outlier status in PCA plot.')
-            comb_counts = comb_counts.drop(columns=['WT_439_Taurine'])
-            comb_metadata = comb_metadata.drop(index=['WT_439_Taurine'])
-
-        #comb_counts = transcript_counts[transcript_metadata['Combination'].isin(combination)]
-        #comb_metadata = transcript_metadata[transcript_metadata['Combination'].isin(combination)]
-        #res, sig = run_deseq2(comb_counts, comb_metadata, transmap, design_formula = ['Combination', combination[0], combination[1]] , outfile = f'results/deseq2_transcript_{combination[0]}_vs_{combination[1]}.tsv')
-        logging.info(f'\n')
-    """
+    '''
     
 if __name__ == "__main__":
     main()
