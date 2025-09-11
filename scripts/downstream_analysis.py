@@ -38,6 +38,8 @@ def load_counts(file_path, id_col = 'gene_id', drop_samples = []):
     metadata['Drug'] = metadata.index.str.split('_').str[2]
     metadata['Combination'] = metadata['Genotype'] + '_' + metadata['Drug']
 
+    print(metadata)
+
 
     return df, metadata, genemap
 
@@ -150,7 +152,6 @@ def run_gsea(res, outfile_prefix = None):
     res = res.reset_index()
 
     ranking = res[['gene_name', 'stat']].sort_values(by='stat', ascending=False)
-    print(ranking)
     #print duplicates
     duplicates = ranking[ranking.duplicated(subset='gene_name', keep=False)]
     if len(duplicates) > 0:
@@ -203,7 +204,7 @@ def main():
         level=logging.INFO
     )
 
-    for filters, names in zip([[], ['431_WT_Taurine'], ['431_WT_Taurine', '443_TTN_Untreated']], ['no_filter','remove_431_TTN', 'remove_443_TTN']):
+    for filters, names in zip([[], ['431_WT_Taurine'], ['431_WT_Taurine', '443_TTN_Untreated']], ['no_filter','remove_431', 'remove_431_443']):
         logging.info(f"================ Analysis with filters: {filters} ================")
         gene_counts, gene_metadata, genemap = load_counts("rnaseq/counts/salmon.merged.gene_counts.tsv", id_col = 'gene_name', drop_samples=filters)
         dds = create_deseq2_object(gene_counts, gene_metadata, design = 'Combination')
@@ -212,12 +213,11 @@ def main():
         plot_pca(dds, color_by = 'Combination', outfile_prefix=f'results/{names}/pca_plot_all_samples.png')
 
 
-        combinations = [['WT_Untreated', 'TTN_Untreated'],
-                    ['WT_Untreated', 'TTN_Taurine'],
-                    ['WT_Untreated', 'WT_Taurine'], 
-                    ['TTN_Untreated', 'TTN_Taurine'], 
-                    ['WT_Taurine', 'TTN_Taurine']]
-    '''
+        combinations = [['TTN_Untreated', 'WT_Untreated'],
+                    ['TTN_Taurine', 'WT_Untreated'],
+                    ['WT_Taurine', 'WT_Untreated'], 
+                    ['TTN_Taurine','TTN_Untreated']]
+    
         for combination in combinations:
             summary = de_statistics(dds, ['Combination', combination[0], combination[1]])
             summary['gene_name'] = summary.index.map(genemap)
@@ -225,7 +225,6 @@ def main():
             summary.reset_index(inplace=True)
             summary = summary.sort_values(by='padj', ascending=True)
             summary['gene_name'] = summary['gene_name'].fillna(summary['gene_id'])
-            summary = summary.loc[summary['baseMean']>=10]
 
             summary.to_csv(f'results/{names}/deseq2_{combination[0]}_vs_{combination[1]}.tsv', sep = '\t', index = False)
             #summary = pd.read_csv(f'results/deseq2_{combination[0]}_vs_{combination[1]}.tsv', sep = '\t')
@@ -242,12 +241,11 @@ def main():
                         ]
             
             geneset_names = ['sig_deg', 'mitochondrial', 'ttn_important']
-            #plot_volcano(summary, labels = truncated_labels, label_col = 'gene_name', title = f'Volcano Plot: {combination[0]} vs {combination[1]}', hline = 1.3, vline = 1, savepath = f'results/{names}/volcano_{combination[0]}_vs_{combination[1]}.png')
-            #for geneset, name in zip(genesets, geneset_names):
-            #    plot_heatmap(dds, genes = geneset, genemap = genemap, prefix = f'{names}/{name}_{combination[0]}_vs_{combination[1]}')
-            #run_gsea(summary, outfile_prefix = f'results/{names}/gsea_{combination[0]}_vs_{combination[1]}.filter')
+            plot_volcano(summary, labels = truncated_labels, label_col = 'gene_name', title = f'Volcano Plot: {combination[0]} vs {combination[1]}', hline = 1.3, vline = 1, savepath = f'results/{names}/volcano_{combination[0]}_vs_{combination[1]}.png')
+            for geneset, name in zip(genesets, geneset_names):
+                plot_heatmap(dds, genes = geneset, genemap = genemap, prefix = f'{names}/{name}_{combination[0]}_vs_{combination[1]}')
+            run_gsea(summary, outfile_prefix = f'results/{names}/gsea_{combination[0]}_vs_{combination[1]}.filter')
         
-    '''
     
 if __name__ == "__main__":
     main()
